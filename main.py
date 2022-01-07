@@ -50,7 +50,7 @@ def start(message):
 
     if user_id in game.gameState and game.gameState[user_id] == True:
         # Game already started
-        message = f'Hi {chat_user}, a game has already been started...\nTo play the tiles, please use the sticker pack provided ' + "<a href='https://t.me/addstickers/MahjongTiles'>here.</a>"
+        message = f'Hi {chat_user}, a game has already been started...\nTo play the tiles, please mention the bot and the tiles available will be displayed.'
         bot.send_message(
             chat_id,
             message,
@@ -64,7 +64,7 @@ def start(message):
         game.gameState[user_id] = True
         game.myHand[user_id] = game.emptyHand.copy()
         game.action[user_id] = game.initialAction.copy()
-        message = f'Hi {chat_user}, the game has started, please update your starting hand.\nTo play the tiles, please use the sticker pack provided ' + "<a href='https://t.me/addstickers/MahjongTiles'>here.</a>"
+        message = f'Hi {chat_user}, the game has started, please update your starting hand.\nTo play the tiles, please mention the bot and the tiles available will be displayed.'
         bot.send_photo(chat_id, img_url)
         bot.send_message(
             chat_id,
@@ -167,10 +167,10 @@ def newgame(message):
         return
 
     else:
-        game.myHand[user_id] = game.sampleHand.copy()
+        game.myHand[user_id] = game.emptyHand.copy()
         game.action[user_id] = game.initialAction.copy()
         print("initialised sample")
-        chat_text = "Game has been restarted."
+        chat_text = "Game has been restarted. Please type the string of tiles or select the 'Initialise hand' option to initialise your deck"
         bot.send_message(
             chat_id=chat_id,
             text=chat_text,
@@ -234,7 +234,10 @@ def handle_callback(call):
 
     elif data.split()[0] == "Fast":
         game.action[user_id]["initialise"] = True
-        bot.send_message(chat_id, "Please type the string of tiles")
+        bot.send_message(chat_id, "To do a fast initialization of your suited tiles, simply type 'wan', or 'tong' or 'tiao'" + 
+        "followed by the values of your tiles with a space in between each entry." + 
+        "For instance, 'wan123 tong24 tiao1' initializes 1,2 and 3 of wan and 2,4 of tong and 1 of tiao." + 
+        "For the remainder of the tiles, simply add it in manually via the sticker packs." + "\nPlease type the string of tiles")
 
     return
 
@@ -383,17 +386,6 @@ def recommend(user_id, chat_id):
             chat_id,
             stickerSet.dictOld[TILE_TO_TILE_OPTION_MAP[tile_to_throw]])
 
-    # if not user_hand:
-    #     chat_text = "You should have 14 tiles before you need to discard a tile."
-    #     bot.send_message(chat_id=chat_id, text=chat_text)
-    #     return
-
-    # not enough tiles to be able to discard
-    # if len(tiles_in_hand) < 14:
-    #     chat_text = "You should have 14 tiles before you need to discard a tile."
-    #     bot.send_message(chat_id=chat_id, text=chat_text)
-    #     return
-
     return is_winning_hand
 
 def draw(sticker_id, user_id, chat_id):
@@ -402,10 +394,6 @@ def draw(sticker_id, user_id, chat_id):
     bot.send_message(chat_id, "Tile Drawn: " + tileName)
     game.action[user_id]["draw"] = False
 
-    
-
-    # if game.number_of_tiles_on_my_hand(user_id) == 14: 
-    #     recommend(user_id, chat_id)
 
 def throw(sticker_id, user_id, chat_id):
     tileName = decodeTile(sticker_id)
@@ -450,14 +438,8 @@ def initialise(sticker_id, user_id, chat_id):
                 winningMsg += "\n"
             bot.send_message(chat_id, winningMsg)
 
-
-
-
 @bot.message_handler(commands=['check'])
 def check(message):
     print(game.myHand[message.chat.id].items())
-
-
-
 
 bot.infinity_polling()

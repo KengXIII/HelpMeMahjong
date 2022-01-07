@@ -200,6 +200,10 @@ class Hand:
     @classmethod
     def getLoneTiles(cls, tiles):
         allCombis = Hand.getAllPossibleSetCombis(tiles)
+
+        if len(allCombis) == 0:
+            return tiles
+
         loneTileIdxs = set()
         mostLoneTiles = []
 

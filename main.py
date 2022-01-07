@@ -425,3 +425,4 @@ def initialise(sticker_id, user_id, chat_id):
 def check(message):
     print(game.myHand[message.chat.id].items())
 
+bot.infinity_polling()

@@ -28,6 +28,9 @@ class Tile:
     def __hash__(self):
         return hash((self.category, self.number))
 
+    def setIsInsideWinningHand(self, val):
+        self.isInsideWinningHand = val
+
 
 class SuitedTile(Tile):
 
@@ -87,6 +90,8 @@ class SuitedTile(Tile):
         else:
             return []
 
+    def setIsInsideWinningHand(self, val):
+        self.isInsideWinningHand = val
 
 class HonorTile(Tile):
     def __init__(self, category):
@@ -102,3 +107,6 @@ class HonorTile(Tile):
     
     def __hash__(self):
         return hash((self.category, self.number))
+    
+    def setIsInsideWinningHand(self, val):
+        self.isInsideWinningHand = val

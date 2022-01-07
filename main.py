@@ -5,7 +5,6 @@ from hand import Hand
 from utils import TILE_MAP, TILE_TO_TILE_OPTION_MAP
 import sticker as stickerSet
 import game
-from game import number_of_tiles_on_my_hand
 import time
 
 from telebot.types import (BotCommand, InlineKeyboardButton,
@@ -79,16 +78,19 @@ def start(message):
           if game.number_of_tiles_on_my_hand(user_id) < 13:
             bot.send_message(chat_id, "You do not have enough cards on hand")
             game.action[user_id]["initialise"] = True
+
             while (game.number_of_tiles_on_my_hand(user_id) < 13):
                 time.sleep(3)
-          if game.number_of_tiles_on_my_hand(user_id) == 13:
+          elif game.number_of_tiles_on_my_hand(user_id) == 13:
             bot.send_message(chat_id, "What card did you add into your hand?")
             game.action[user_id]["draw"] = True
             while (game.number_of_tiles_on_my_hand(user_id) == 13):
                 time.sleep(3)
-          if game.number_of_tiles_on_my_hand(user_id) == 14:
-            bot.send_message(chat_id, "After our careful recommendations, you should throw this tile!")
-            recommend(user_id, chat_id)
+          elif game.number_of_tiles_on_my_hand(user_id) == 14:
+            is_win = recommend(user_id, chat_id)
+            if is_win:
+                break
+                
             game.action[user_id]["throw"] = True
             bot.send_message(chat_id, "What card did you throw?")
             while (game.number_of_tiles_on_my_hand(user_id) == 14):
@@ -358,26 +360,25 @@ def recommend(user_id, chat_id):
     """
     Runs the algorithm to recommend the tile to discard
     """
-
     user_hand = game.myHand
 
-    tiles_in_hand = []
+    hand = Hand([])
 
     for (tile_string_rep, count) in user_hand[user_id].items():
         for i in range(count):
-            tiles_in_hand.append(TILE_MAP[tile_string_rep])
+            tile_to_add = TILE_MAP[tile_string_rep]
+            tile_to_add.setIsInsideWinningHand(False)
+            hand.addTile(tile_to_add)
 
-    hand = Hand(tiles_in_hand)
-    print(len(hand.insideTiles))
     is_winning_hand = hand.isWinningHand()
 
     if is_winning_hand:
-        print("WIN LIAO")
         chat_text = "Congrats! Run /kill to end the game!"
         bot.send_message(chat_id=chat_id, text=chat_text)
         
     else:
-        tile_to_throw = Hand.getTilesToThrow(tiles_in_hand)
+        bot.send_message(chat_id, "After our careful recommendations, you should throw this tile!")
+        tile_to_throw = Hand.getTilesToThrow(hand.insideTiles)
         bot.send_sticker(
             chat_id,
             stickerSet.dictOld[TILE_TO_TILE_OPTION_MAP[tile_to_throw]])
@@ -393,13 +394,16 @@ def recommend(user_id, chat_id):
     #     bot.send_message(chat_id=chat_id, text=chat_text)
     #     return
 
-    return
+    return is_winning_hand
 
 def draw(sticker_id, user_id, chat_id):
     tileName = decodeTile(sticker_id)
     game.myHand[user_id][tileName] += 1
     bot.send_message(chat_id, "Tile Drawn: " + tileName)
     game.action[user_id]["draw"] = False
+
+    
+
     # if game.number_of_tiles_on_my_hand(user_id) == 14: 
     #     recommend(user_id, chat_id)
 
@@ -408,6 +412,21 @@ def throw(sticker_id, user_id, chat_id):
     game.myHand[user_id][tileName] -= 1
     bot.send_message(chat_id, "Tile Thrown: " + tileName)
     game.action[user_id]["throw"] = False
+
+    tiles_in_hand = []
+    for (tile_string_rep, count) in game.myHand[user_id].items():
+        for i in range(count):
+            tiles_in_hand.append(TILE_MAP[tile_string_rep])
+    hand = Hand(tiles_in_hand)
+    winningTiles = hand.isOneTileFromWinning()
+    if winningTiles:
+        winningMsg = "Congrats! You're one step from winning!\n Look out for the following tiles:\n"
+        for tile in winningTiles:
+            winningMsg += str(tile)
+            winningMsg += "\n"
+        bot.send_message(chat_id, winningMsg)
+    return
+
 
 def initialise(sticker_id, user_id, chat_id):
     tileName = decodeTile(sticker_id)
@@ -418,11 +437,27 @@ def initialise(sticker_id, user_id, chat_id):
         game.action[user_id]["initialise"] = False
         bot.send_message(chat_id, "All 13 tiles have been initialised")
 
+        tiles_in_hand = []
+        for (tile_string_rep, count) in game.myHand[user_id].items():
+            for i in range(count):
+                tiles_in_hand.append(TILE_MAP[tile_string_rep])
+        hand = Hand(tiles_in_hand)
+        winningTiles = hand.isOneTileFromWinning()
+        if winningTiles:
+            winningMsg = "Congrats! You're one step from winning!\n Look out for the following tiles:\n"
+            for tile in winningTiles:
+                winningMsg += str(tile)
+                winningMsg += "\n"
+            bot.send_message(chat_id, winningMsg)
+
 
 
 
 @bot.message_handler(commands=['check'])
 def check(message):
     print(game.myHand[message.chat.id].items())
+
+
+
 
 bot.infinity_polling()

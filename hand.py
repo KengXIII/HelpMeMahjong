@@ -177,11 +177,42 @@ class Hand:
 
         return finalCombis
 
+    # # Returns lone tiles from a list of tiles (tiles that can be thrown without affecting combos)
+    # @classmethod
+    # def getLoneTiles(cls, tiles):
+    #     allCombis = Hand.getAllPossibleSetCombis(tiles)
+    #     loneTileIdxs = set()
+
+    #     for i in range(len(tiles)):
+    #         for combi in allCombis:
+    #             copyOfCombi = combi.copy()
+    #             if tiles[i] not in copyOfCombi:
+    #                 loneTileIdxs.add(i)
+    #             else:
+    #                 copyOfCombi.remove(tiles[i])
+
+    #     loneTiles = []
+    #     for i in list(loneTileIdxs):
+    #         loneTiles.append(tiles[i])
+    #     return loneTiles
+    
     # Returns lone tiles from a list of tiles (tiles that can be thrown without affecting combos)
     @classmethod
     def getLoneTiles(cls, tiles):
         allCombis = Hand.getAllPossibleSetCombis(tiles)
         loneTileIdxs = set()
+        mostLoneTiles = []
+
+        appendedAllCombis = []
+        for combi in allCombis:
+          appendedAllCombis += combi
+
+        for tile in tiles:
+          if tile not in appendedAllCombis:
+            mostLoneTiles.append(tile)
+        
+        if not mostLoneTiles:
+          return mostLoneTiles
 
         for i in range(len(tiles)):
             for combi in allCombis:
@@ -274,6 +305,7 @@ class Hand:
         if self.correctConfigOfWinningHand():
             sum = 0
             count = 0
+            idxes = []
             Hand.markHand(self.insideTiles, False)
             for tile in self.insideTiles:
                 sum += tile.number
@@ -293,31 +325,32 @@ class Hand:
                 copyOfTiles[pair[1]].isInsideWinningHand = True
                 copyOfTiles[pair[0]].isInsideWinningHand = True
                 count += 2
+                idxes.append(pair[1])
+                idxes.append(pair[0])
 
                 # looks for pongs (3 of a kind)
                 for i in range(len(copyOfTiles) - 2):
                     areTheSame = copyOfTiles[i] == copyOfTiles[i + 1] and copyOfTiles[i + 1] == copyOfTiles[i + 2]
-                    areAllNotInsideWinningHand = not (copyOfTiles[i].isInsideWinningHand
-                                                      or copyOfTiles[i + 1].isInsideWinningHand
-                                                      or copyOfTiles[i + 2].isInsideWinningHand)
+                    areAllNotInsideWinningHand = i not in idxes and (i+1) not in idxes and (i+2) not in idxes
                     # print(f'{copyOfTiles[i]}, {copyOfTiles[i + 1]}, {copyOfTiles[i + 2]} are {areTheSame}')
                     if areTheSame and areAllNotInsideWinningHand:
                         copyOfTiles[i + 2].isInsideWinningHand = True
                         copyOfTiles[i + 1].isInsideWinningHand = True
                         copyOfTiles[i].isInsideWinningHand = True
+                        idxes += [i, i+1 , i+2]
                         count += 3
 
                 # looks for set of 3 consecutive tiles
                 for i in range(len(copyOfTiles)):
-                    if not isinstance(copyOfTiles[i], SuitedTile) or copyOfTiles[i].isInsideWinningHand:
+                    if not isinstance(copyOfTiles[i], SuitedTile) or (i in idxes):
                         continue
                     else:
                         for j in range(i + 1, len(copyOfTiles)):
-                            if not isinstance(copyOfTiles[j], SuitedTile) or copyOfTiles[j].isInsideWinningHand:
+                            if not isinstance(copyOfTiles[j], SuitedTile) or (j in idxes):
                                 continue
                             else:
                                 for k in range(j + 1, len(copyOfTiles)):
-                                    if copyOfTiles[k].isInsideWinningHand:
+                                    if not isinstance(copyOfTiles[k], SuitedTile) or (k in idxes):
                                         continue
                                     elif (SuitedTile.isConsecutiveThreeTile(copyOfTiles[i],
                                                                                   copyOfTiles[j],
@@ -325,14 +358,15 @@ class Hand:
                                         copyOfTiles[i].isInsideWinningHand = True
                                         copyOfTiles[j].isInsideWinningHand = True
                                         copyOfTiles[k].isInsideWinningHand = True
-                                        count +=3
+                                        idxes += [i, j, k]
+                                        count += 3
                                         break
-                
-                
-                if count == len(copyOfTiles):
+                print(len(idxes))
+                if len(idxes) == len(copyOfTiles):
                     return True
-                
+                count = 0
                 Hand.markHand(self.insideTiles, False)
+                idxes = []
             return False
         else:
             # print("Incorrect configuration")

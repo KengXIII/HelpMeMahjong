@@ -195,41 +195,6 @@ class Hand:
     #     for i in list(loneTileIdxs):
     #         loneTiles.append(tiles[i])
     #     return loneTiles
-    
-    # Returns lone tiles from a list of tiles (tiles that can be thrown without affecting combos)
-    @classmethod
-    def getLoneTiles(cls, tiles):
-        allCombis = Hand.getAllPossibleSetCombis(tiles)
-
-        if len(allCombis) == 0:
-            return tiles
-
-        loneTileIdxs = set()
-        mostLoneTiles = []
-
-        appendedAllCombis = []
-        for combi in allCombis:
-          appendedAllCombis += combi
-
-        for tile in tiles:
-          if tile not in appendedAllCombis:
-            mostLoneTiles.append(tile)
-        
-        if not mostLoneTiles:
-          return mostLoneTiles
-
-        for i in range(len(tiles)):
-            for combi in allCombis:
-                copyOfCombi = combi.copy()
-                if tiles[i] not in copyOfCombi:
-                    loneTileIdxs.add(i)
-                else:
-                    copyOfCombi.remove(tiles[i])
-
-        loneTiles = []
-        for i in list(loneTileIdxs):
-            loneTiles.append(tiles[i])
-        return loneTiles
 
     # Gets possible tiles to wait for
     @classmethod                                                                                              
@@ -243,7 +208,9 @@ class Hand:
                 if tiles[i] not in copyOfCombi:                                                               
                     loneTileIdxs.add(i)                                                                       
                 else:                                                                                         
-                    copyOfCombi.remove(tiles[i])                                                              
+                    copyOfCombi.remove(tiles[i])
+        if len(list(loneTileIdxs)) == 0:
+            return tiles
 
         loneTiles = []                                                                                        
         for i in list(loneTileIdxs):                                                                          

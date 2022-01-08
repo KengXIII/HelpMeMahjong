@@ -237,7 +237,7 @@ def handle_callback(call):
         bot.send_message(chat_id, "To do a fast initialization of your suited tiles, simply type 'wan', or 'tong' or 'tiao'" + 
         "followed by the values of your tiles with a space in between each entry." + 
         "For instance, 'wan123 tong24 tiao1' initializes 1,2 and 3 of wan and 2,4 of tong and 1 of tiao." + 
-        "For the remainder of the tiles, simply add it in manually via the sticker packs." + "\nPlease type the string of tiles")
+        "For the remainder of the tiles, simply add it in manually via the sticker packs." + "\n\nPlease type the string of tiles")
 
     return
 

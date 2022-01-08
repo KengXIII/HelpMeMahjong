@@ -232,53 +232,82 @@ class Hand:
         return loneTiles
 
     # Gets possible tiles to wait for
-    @classmethod
-    def getTilesToThrow(cls, tiles):
-        loneTiles = Hand.getLoneTiles(tiles)
-        filteredLoneTiles = []
-        for i in range(len(loneTiles) - 1):
-            if ((i == 0 and loneTiles[i] != loneTiles[i + 1])
-                    or ((i == len(loneTiles) - 1) and loneTiles[i] != loneTiles[i - 1])
-                    or (loneTiles[i] != loneTiles[i - 1] and loneTiles[i] != loneTiles[i + 1])):
-                filteredLoneTiles.append(loneTiles[i])
+    @classmethod                                                                                              
+    def getLoneTiles(cls, tiles):                                                                             
+        allCombis = Hand.getAllPossibleSetCombis(tiles)                                                       
+        loneTileIdxs = set()                                                                                  
 
-        maxNumPotentialTiles = 0
-        maxIdxs = []
-        for i in range(len(filteredLoneTiles)):
-            copyOfTiles = tiles.copy()
-            copyOfTiles.remove(tiles[i])
-            numPotentialTiles = len(Hand.getPotentialTiles(copyOfTiles))
-            print(f'{filteredLoneTiles[i]}: {numPotentialTiles}')
-            if numPotentialTiles > maxNumPotentialTiles:
-                maxNumPotentialTiles = numPotentialTiles
-                maxIdxs = [i]
-            elif numPotentialTiles == maxNumPotentialTiles:
-                maxIdxs.append(i)
+        for i in range(len(tiles)):                                                                           
+            for combi in allCombis:                                                                           
+                copyOfCombi = combi.copy()                                                                    
+                if tiles[i] not in copyOfCombi:                                                               
+                    loneTileIdxs.add(i)                                                                       
+                else:                                                                                         
+                    copyOfCombi.remove(tiles[i])                                                              
 
-        def findFurthestTile(tileList):
-            maxDist = 0
-            if len(tileList) == 0:
-                return
-            tileThrown = tileList[0]
-            for idx in maxIdxs:
-                dist = abs(tileList[idx].number - 5)
-                if dist > maxDist:
-                    maxDist = dist
-                    tileThrown = tileList[idx]
-            return tileThrown
+        loneTiles = []                                                                                        
+        for i in list(loneTileIdxs):                                                                          
+            loneTiles.append(tiles[i])                                                                        
+        return loneTiles                                                                                      
 
-        tileThrown = findFurthestTile(filteredLoneTiles)
-        tileThrownFromLoneTileList = findFurthestTile(loneTiles)
+    @classmethod                                                                                              
+    def canFormPreConsectSet(cls, tile1, tile2):                                                              
+        if not isinstance(tile1, SuitedTile) or not isinstance(tile2, SuitedTile):                            
+            return False                                                                                      
+        else:                                                                                                 
+            if tile1.category != tile2.category:                                                              
+                return False                                                                                  
+            else:                                                                                             
+                return abs(tile2.number - tile1.number) < 2                                                   
+    @classmethod                                                                                              
+    def getPreSets(cls, loneTiles):                                                                           
+        count = 0                                                                                             
+        idxs = []                                                                                             
+        for i in range(len(loneTiles)):                                                                       
+            for j in range(i+1, len(loneTiles)):                                                              
+                if i not in idxs and j not in idxs and Hand.canFormPreConsectSet(loneTiles[i], loneTiles[j]): 
+                    count += 1                                                                                
+                    idxs.append(i)                                                                            
+                    idxs.append(j)                                                                            
+        return count                                                                                          
 
-        if len(filteredLoneTiles) != 0:
-            print("Throwing from filtered list")
-            return tileThrown
-        elif len(loneTiles) != 0:
-            print("Throwing from lone tile list")
-            return tileThrownFromLoneTileList
-        else:
-            print("No tile found")
-            return None
+
+    @classmethod                                                                                              
+    def isBetterState(cls, tiles1, tiles2):                                                                   
+        sets1 = len(Hand.getAllPossibleSetCombis(tiles1)[0])                                                  
+        sets2 = len(Hand.getAllPossibleSetCombis(tiles2)[0])                                                  
+
+        if sets1 > sets2:                                                                                     
+            return True                                                                                       
+        else:                                                                                                 
+            preset1 = Hand.getPreSets(Hand.getLoneTiles(tiles1))                                              
+            preset2 = Hand.getPreSets(Hand.getLoneTiles(tiles2))                                              
+            return preset1 >= preset2                                                                         
+
+
+    # Gets possible tiles to wait for                                                                         
+    @classmethod                                                                                              
+    def getTilesToThrow(cls, tiles):                                                                          
+
+        loneTiles = Hand.getLoneTiles(tiles)                                                                  
+        print(type(loneTiles))                                                                                
+
+        if len(loneTiles) == 0:                                                                               
+            return None                                                                                       
+
+        possibleHands = []                                                                                    
+        for tile in loneTiles:                                                                                
+            hand = Hand(tiles.copy())                                                                         
+            hand.removeTile(tile)                                                                             
+            possibleHands.append(hand)                                                                        
+
+        bestHandIdx = 0                                                                                       
+        for i in range(1, len(possibleHands)):                                                                
+            if Hand.isBetterState(possibleHands[i].insideTiles, possibleHands[bestHandIdx].insideTiles):      
+                bestHandIdx = i                                                                               
+
+        return loneTiles[bestHandIdx]                                                                         
+
 
     # marks hand as being used in winning hand or not
     @classmethod

@@ -275,7 +275,6 @@ class Hand:
 
         return loneTiles[bestHandIdx]                                                                         
 
-
     # marks hand as being used in winning hand or not
     @classmethod
     def markHand(cls, set, isWinningHand):

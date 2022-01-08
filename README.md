@@ -1,4 +1,4 @@
-# HelpMeMahjong
+# HelpMeMahjong :mahjong:
 
 ## Inspiration
 It's not uncommon to see NUS students gathering (legally) in groups of 4 to play an intense game of Mahjong late in the evening, including ourselves! With Chinese New Year just around the corner as well, we felt that it would be a great idea to create a Telegram bot that helps newer players decide what is the best tile to throw from your hand!
